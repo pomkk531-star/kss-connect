@@ -24,13 +24,18 @@ export async function POST(req: Request) {
 
     const { username, password, fullName } = parsed.data;
 
-    const existingTeacher = findTeacher(username);
+    // Split fullName into firstName and lastName
+    const nameParts = fullName.trim().split(' ');
+    const firstName = nameParts[0];
+    const lastName = nameParts.slice(1).join(' ') || nameParts[0];
+
+    const existingTeacher = findTeacher(firstName, lastName);
     if (existingTeacher) {
       return NextResponse.json({ ok: false, message: 'ชื่อผู้ใช้นี้มีอยู่แล้ว' }, { status: 409 });
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
-    const newTeacher = createTeacher(username, passwordHash, fullName);
+    const newTeacher = createTeacher(firstName, lastName, passwordHash);
 
     const response = NextResponse.json({ ok: true, teacherId: newTeacher.id });
     response.cookies.set('kss_teacher', String(newTeacher.id), {
