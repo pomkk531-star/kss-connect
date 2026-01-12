@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>สร้างบัญชีนักเรียนทดสอบ</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #E7F5EA 0%, #C5E8CD 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .container {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(19, 143, 45, 0.15);
+      padding: 40px;
+      max-width: 500px;
+      width: 100%;
+    }
+    h1 {
+      color: #138F2D;
+      margin-bottom: 10px;
+      font-size: 24px;
+      text-align: center;
+    }
+    .subtitle {
+      color: #666;
+      text-align: center;
+      margin-bottom: 30px;
+      font-size: 14px;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      color: #138F2D;
+      margin-bottom: 8px;
+      font-weight: 500;
+      font-size: 14px;
+    }
+    input, select {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid #C5E8CD;
+      border-radius: 8px;
+      font-size: 16px;
+      transition: all 0.3s;
+      font-family: inherit;
+    }
+    input:focus, select:focus {
+      outline: none;
+      border-color: #138F2D;
+      box-shadow: 0 0 0 3px rgba(19, 143, 45, 0.1);
+    }
+    button {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #138F2D 0%, #0F7024 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(19, 143, 45, 0.3);
+    }
+    button:active {
+      transform: translateY(0);
+    }
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .result {
+      margin-top: 24px;
+      padding: 20px;
+      border-radius: 8px;
+      display: none;
+    }
+    .result.success {
+      background: #E7F5EA;
+      border: 2px solid #138F2D;
+      color: #0F7024;
+    }
+    .result.error {
+      background: #FEE;
+      border: 2px solid #E53E3E;
+      color: #C53030;
+    }
+    .result h3 {
+      margin-bottom: 12px;
+      font-size: 16px;
+    }
+    .result p {
+      margin: 6px 0;
+      font-size: 14px;
+    }
+    .result strong {
+      color: #138F2D;
+    }
+    .hint {
+      font-size: 12px;
+      color: #666;
+      margin-top: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎓 สร้างบัญชีนักเรียนทดสอบ</h1>
+    <p class="subtitle">สำหรับ Development เท่านั้น</p>
+    
+    <form id="createForm">
+      <div class="form-group">
+        <label for="firstName">ชื่อ</label>
+        <input type="text" id="firstName" required placeholder="เช่น สมชาย">
+      </div>
+
+      <div class="form-group">
+        <label for="lastName">นามสกุล</label>
+        <input type="text" id="lastName" required placeholder="เช่น ใจดี">
+      </div>
+
+      <div class="form-group">
+        <label for="classCode">ห้องเรียน</label>
+        <select id="classCode" required>
+          <option value="">เลือกห้องเรียน</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="password">รหัสผ่าน</label>
+        <input type="text" id="password" required minlength="6" placeholder="อย่างน้อย 6 ตัวอักษร">
+        <div class="hint">ควรมีอย่างน้อย 6 ตัวอักษร</div>
+      </div>
+
+      <button type="submit" id="submitBtn">สร้างบัญชี</button>
+    </form>
+
+    <div id="result" class="result"></div>
+  </div>
+
+  <script>
+    // Populate class codes
+    const classSelect = document.getElementById('classCode');
+    for (let grade = 1; grade <= 6; grade++) {
+      const maxRoom = grade <= 3 ? 5 : 4;
+      for (let room = 1; room <= maxRoom; room++) {
+        const option = document.createElement('option');
+        option.value = `ม.${grade}/${room}`;
+        option.textContent = `ม.${grade}/${room}`;
+        classSelect.appendChild(option);
+      }
+    }
+
+    // Handle form submission
+    document.getElementById('createForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const submitBtn = document.getElementById('submitBtn');
+      const resultDiv = document.getElementById('result');
+      
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'กำลังสร้าง...';
+      resultDiv.style.display = 'none';
+
+      const data = {
+        firstName: document.getElementById('firstName').value.trim(),
+        lastName: document.getElementById('lastName').value.trim(),
+        classCode: document.getElementById('classCode').value,
+        password: document.getElementById('password').value
+      };
+
+      try {
+        const response = await fetch('/api/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+
+        if (result.ok) {
+          resultDiv.className = 'result success';
+          resultDiv.innerHTML = `
+            <h3>✅ สร้างบัญชีสำเร็จ!</h3>
+            <p><strong>ID:</strong> ${result.id}</p>
+            <p><strong>ชื่อ:</strong> ${data.firstName}</p>
+            <p><strong>นามสกุล:</strong> ${data.lastName}</p>
+            <p><strong>ห้องเรียน:</strong> ${data.classCode}</p>
+            <p><strong>รหัสผ่าน:</strong> ${data.password}</p>
+          `;
+          document.getElementById('createForm').reset();
+        } else {
+          resultDiv.className = 'result error';
+          resultDiv.innerHTML = `
+            <h3>❌ ไม่สามารถสร้างบัญชีได้</h3>
+            <p>${result.message || 'เกิดข้อผิดพลาด'}</p>
+          `;
+        }
+      } catch (err) {
+        resultDiv.className = 'result error';
+        resultDiv.innerHTML = `
+          <h3>❌ เกิดข้อผิดพลาด</h3>
+          <p>${err.message}</p>
+        `;
+      } finally {
+        resultDiv.style.display = 'block';
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'สร้างบัญชี';
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,5 @@
+// This file has been removed. Admin can now login from the main page (/)
+// Use username in the "ชื่อ" field and password to login as admin
+export default function Removed() {
+  return null;
+}

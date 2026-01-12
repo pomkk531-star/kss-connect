@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>สร้างแอดมิน - KSS Connect</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #E7F5EA 0%, #FFFFFF 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(19, 143, 45, 0.15);
+            border-top: 4px solid #138F2D;
+        }
+        h1 {
+            color: #138F2D;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+            box-sizing: border-box;
+            transition: border-color 0.3s;
+        }
+        input:focus {
+            outline: none;
+            border-color: #138F2D;
+        }
+        button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #138F2D 0%, #0F7124 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.3s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(19, 143, 45, 0.3);
+        }
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            display: none;
+        }
+        .success {
+            background: #E7F5EA;
+            border-left: 4px solid #138F2D;
+            color: #0C5A1D;
+        }
+        .error {
+            background: #fee;
+            border-left: 4px solid #ef4444;
+            color: #991b1b;
+        }
+        .credentials {
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            border: 1px solid #e2e8f0;
+        }
+        .credentials div {
+            margin: 8px 0;
+            font-family: monospace;
+        }
+        .credentials strong {
+            color: #138F2D;
+            min-width: 100px;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 สร้างแอดมิน</h1>
+        <p class="subtitle">สร้างบัญชีแอดมินสำหรับ KSS Connect</p>
+        
+        <form id="createAdminForm">
+            <div class="form-group">
+                <label for="username">ชื่อผู้ใช้ (Username)</label>
+                <input type="text" id="username" value="admin" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">รหัสผ่าน (Password)</label>
+                <input type="text" id="password" value="admin123" required>
+            </div>
+            
+            <button type="submit" id="submitBtn">สร้างแอดมิน</button>
+        </form>
+        
+        <div id="result" class="result"></div>
+    </div>
+
+    <script>
+        document.getElementById('createAdminForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const result = document.getElementById('result');
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'กำลังสร้าง...';
+            result.style.display = 'none';
+            
+            try {
+                const response = await fetch('http://localhost:3000/api/admin/create', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                const data = await response.json();
+                
+                if (data.ok) {
+                    result.className = 'result success';
+                    result.innerHTML = `
+                        <div style="font-size: 18px; margin-bottom: 10px;">✅ สร้างแอดมินสำเร็จ!</div>
+                        <div class="credentials">
+                            <div><strong>👤 Username:</strong> ${username}</div>
+                            <div><strong>🔑 Password:</strong> ${password}</div>
+                            <div><strong>🆔 Admin ID:</strong> ${data.admin.id}</div>
+                            <div><strong>📅 สร้างเมื่อ:</strong> ${new Date(data.admin.createdAt).toLocaleString('th-TH')}</div>
+                        </div>
+                        <div style="margin-top: 15px; padding: 10px; background: #fff3cd; border-radius: 6px; font-size: 14px;">
+                            💡 <strong>วิธี Login:</strong><br>
+                            1. ไปที่หน้าหลัก (http://localhost:3000)<br>
+                            2. ใส่ username ในช่อง "ชื่อ"<br>
+                            3. ใส่ password ในช่อง "รหัสผ่าน"<br>
+                            4. กดเข้าสู่ระบบ
+                        </div>
+                    `;
+                } else {
+                    result.className = 'result error';
+                    result.innerHTML = `
+                        <div style="font-size: 18px; margin-bottom: 10px;">❌ เกิดข้อผิดพลาด</div>
+                        <div>${data.message || 'ไม่สามารถสร้างแอดมินได้'}</div>
+                    `;
+                }
+                
+                result.style.display = 'block';
+                
+            } catch (error) {
+                result.className = 'result error';
+                result.innerHTML = `
+                    <div style="font-size: 18px; margin-bottom: 10px;">❌ เกิดข้อผิดพลาด</div>
+                    <div>ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้<br>กรุณาตรวจสอบว่าเปิด dev server แล้ว (npm run dev)</div>
+                `;
+                result.style.display = 'block';
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'สร้างแอดมิน';
+            }
+        });
+    </script>
+</body>
+</html>
