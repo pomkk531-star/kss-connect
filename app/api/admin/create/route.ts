@@ -15,7 +15,7 @@ export async function POST(req: Request) {
     }
 
     // ตรวจสอบว่ามี username นี้แล้วหรือไม่
-    const existing = findAdmin(username);
+    const existing = await findAdmin(username);
     if (existing) {
       return NextResponse.json({ ok: false, message: `มี username "${username}" อยู่แล้ว` }, { status: 409 });
     }
