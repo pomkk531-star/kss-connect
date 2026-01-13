@@ -95,7 +95,7 @@ export async function POST(request: Request) {
     const finalCat = category && category !== "ทั่วไป" && category !== "อัตโนมัติ" && category !== "auto" ? category : autoCat;
     const finalKeywords = keywords && String(keywords).trim().length > 0 ? keywords : buildKeywords(finalCat, question, answer);
 
-    const result = insertAIKnowledge(question, answer, finalKeywords, finalCat);
+    const result = await insertAIKnowledge(question, answer, finalKeywords, finalCat);
     return NextResponse.json({ ok: true, id: result.id });
   } catch (error) {
     console.error("Error creating AI knowledge:", error);
