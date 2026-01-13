@@ -34,11 +34,15 @@ export async function POST(req: Request) {
 
     const { firstName, lastName, classCode, password } = parsed.data;
 
-    let user: ReturnType<typeof findUser> | ReturnType<typeof findUsersByName>[number] | undefined;
+    let user: Awaited<ReturnType<typeof findUsersByName>>[number] | undefined;
+    
+    const matches = await findUsersByName(firstName, lastName);
+    
     if (classCode) {
-      user = await findUser(firstName, lastName);
+      // ถ้าระบุห้องเรียน ค้นหาตาม classCode
+      user = matches.find(u => u.class_code === classCode);
     } else {
-      const matches = await findUsersByName(firstName, lastName);
+      // ถ้าไม่ระบุห้อง ตรวจสอบว่ามีชื่อซ้ำหลายห้องหรือไม่
       if (matches.length > 1) {
         return NextResponse.json(
           { ok: false, message: 'พบชื่อซ้ำหลายห้อง กรุณาเข้าสู่ระบบด้วยห้องเรียนที่ถูกต้องหรือสมัครใหม่เพื่ออัปเดตข้อมูล' },
