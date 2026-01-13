@@ -46,7 +46,7 @@ export async function POST(req: Request) {
     }
 
     const { title, content, priority, imageUrl } = parsed.data;
-    const result = insertAnnouncement(title, content, priority, imageUrl || '');
+    const result = await insertAnnouncement(title, content, priority, imageUrl || '');
     return NextResponse.json({ ok: true, id: result.id });
   } catch (err) {
     return NextResponse.json({ ok: false, message: 'เกิดข้อผิดพลาด' }, { status: 500 });
