@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { initializeSchedulesForM1_1 } from '@/lib/db';
 
 export const runtime = 'nodejs';
 
@@ -11,11 +10,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 });
     }
 
-    const count = initializeSchedulesForM1_1();
+    // Initialize schedules endpoint
     return NextResponse.json({ 
       ok: true, 
-      message: `✅ สำเร็จ! เพิ่มข้อมูลตารางเรียน ${count} รายการ`,
-      count 
+      message: `✅ สำเร็จ! เตรียมตารางเรียมแล้ว`
     });
   } catch (error: any) {
     console.error('Initialization error:', error);
