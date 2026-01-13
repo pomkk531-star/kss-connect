@@ -29,8 +29,8 @@ export default function AnnouncementPopup() {
     try {
       const res = await fetch('/api/admin/announcements');
       const data = await res.json();
-      if (data.ok && data.announcements) {
-        const sorted = data.announcements.sort((a: Announcement, b: Announcement) => {
+      if (data.ok && data.announcements && Array.isArray(data.announcements)) {
+        const sorted = [...data.announcements].sort((a: Announcement, b: Announcement) => {
           const priorityOrder = { high: 3, normal: 2, low: 1 };
           if (priorityOrder[a.priority] !== priorityOrder[b.priority]) {
             return priorityOrder[b.priority] - priorityOrder[a.priority];

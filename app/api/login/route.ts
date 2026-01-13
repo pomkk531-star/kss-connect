@@ -36,9 +36,9 @@ export async function POST(req: Request) {
 
     let user: ReturnType<typeof findUser> | ReturnType<typeof findUsersByName>[number] | undefined;
     if (classCode) {
-      user = findUser(firstName, lastName, classCode);
+      user = await findUser(firstName, lastName);
     } else {
-      const matches = findUsersByName(firstName, lastName);
+      const matches = await findUsersByName(firstName, lastName);
       if (matches.length > 1) {
         return NextResponse.json(
           { ok: false, message: 'พบชื่อซ้ำหลายห้อง กรุณาเข้าสู่ระบบด้วยห้องเรียนที่ถูกต้องหรือสมัครใหม่เพื่ออัปเดตข้อมูล' },
@@ -57,11 +57,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: false, message: 'รหัสผ่านไม่ถูกต้อง' }, { status: 401 });
     }
     
-    const result = insertLogin(firstName, lastName, user.class_code);
+    const result = await insertLogin(firstName, lastName, user.class_code);
     const res = NextResponse.json({ 
       ok: true, 
       id: user.id, 
-      createdAt: result.createdAt,
+      createdAt: result.created_at,
       userId: user.id,
       classCode: user.class_code
     });

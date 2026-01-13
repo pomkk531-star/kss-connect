@@ -74,7 +74,7 @@ export default function CalendarPage() {
     for (let i = 0; i < firstDay; i++) slots.push({ day: null });
     for (let d = 1; d <= daysInMonth; d++) {
       const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
-      const dayEvents = events.filter((e) => e.eventDate === dateStr);
+      const dayEvents = Array.isArray(events) ? events.filter((e) => e.eventDate === dateStr) : [];
       slots.push({
         day: d,
         dateStr,
