@@ -190,6 +190,19 @@ export async function deleteUser(userId: number) {
   await pool.query('DELETE FROM users WHERE id = $1', [userId]);
 }
 
+export async function updateUserRole(userId: number, role: string) {
+  const result = await pool.query('UPDATE users SET role = $1 WHERE id = $2 RETURNING *', [role, userId]);
+  return result.rows[0];
+}
+
+export async function createUser(firstName: string, lastName: string, classCode: string, passwordHash: string, role?: string, studentId?: string) {
+  const result = await pool.query(
+    'INSERT INTO users (first_name, last_name, student_id, class_code, password_hash, role, created_at) VALUES ($1, $2, $3, $4, $5, $6, NOW()) RETURNING *',
+    [firstName, lastName, studentId || null, classCode, passwordHash, role || 'student']
+  );
+  return result.rows[0];
+}
+
 export async function getUserById(userId: number) {
   const result = await pool.query('SELECT id, first_name, last_name, class_code FROM users WHERE id = $1', [userId]);
   return result.rows[0];
