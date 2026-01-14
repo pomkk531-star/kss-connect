@@ -25,7 +25,7 @@ const UpdateSchema = z.object({
 const DeleteSchema = z.object({ id: z.number().int().positive() });
 
 export async function GET() {
-  const items = listDressCode();
+  const items = await listDressCode();
   return NextResponse.json({ ok: true, items });
 }
 
