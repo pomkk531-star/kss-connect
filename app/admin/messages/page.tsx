@@ -55,7 +55,7 @@ export default function AdminMessagesPage() {
   };
 
   const filtered = useMemo(() => {
-    if (!search.trim()) return messages;
+    if (!Array.isArray(messages) || !search.trim()) return Array.isArray(messages) ? messages : [];
     const term = search.toLowerCase();
     return messages.filter((m) =>
       [
