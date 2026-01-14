@@ -167,7 +167,7 @@ export default function AIAssistantPage() {
       {/* Messages Area */}
       <div className="flex-1 w-full max-w-5xl mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6 overflow-y-auto">
         <div className="space-y-4">
-          {messages.map((msg) => (
+          {Array.isArray(messages) && messages.map((msg) => (
             <div
               key={msg.id}
               className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
