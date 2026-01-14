@@ -35,10 +35,7 @@ export async function DELETE(req: Request) {
   }
 
   try {
-    const result = deleteMessageById(id);
-    if (result.changes === 0) {
-      return NextResponse.json({ ok: false, message: 'ไม่พบบันทึกที่จะลบ' }, { status: 404 });
-    }
+    await deleteAdminMessage(id);
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error('[DELETE /api/admin/messages] error:', err);

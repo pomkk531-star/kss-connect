@@ -42,7 +42,7 @@ export async function POST(req: Request) {
     }
 
     const { title, description, image_url } = parsed.data;
-    const result = insertDressCode(title, description, image_url);
+    const result = await insertDressCode(title, description, image_url ?? null);
     return NextResponse.json({ ok: true, id: result.id });
   } catch (err) {
     return NextResponse.json({ ok: false, message: 'เกิดข้อผิดพลาด' }, { status: 500 });
@@ -62,7 +62,7 @@ export async function PUT(req: Request) {
     }
 
     const { id, title, description, image_url } = parsed.data;
-    updateDressCode(id, title, description, image_url);
+    await updateDressCode(id, title, description, image_url ?? null);
     return NextResponse.json({ ok: true });
   } catch (err) {
     return NextResponse.json({ ok: false, message: 'เกิดข้อผิดพลาด' }, { status: 500 });

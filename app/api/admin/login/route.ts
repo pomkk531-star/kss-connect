@@ -19,7 +19,7 @@ export async function POST(req: Request) {
     }
 
     const { username, password } = parsed.data;
-    const admin = findAdmin(username);
+    const admin = await findAdmin(username);
 
     if (!admin) {
       return NextResponse.json({ ok: false, message: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง' }, { status: 401 });

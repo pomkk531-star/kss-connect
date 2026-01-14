@@ -24,7 +24,7 @@ export async function POST(req: Request) {
     const passwordHash = await bcrypt.hash(password, 10);
     
     // สร้างแอดมิน
-    const result = await createAdmin(username, passwordHash);
+    const result = await createAdmin(username, passwordHash, null, null, null);
 
     return NextResponse.json({
       ok: true,

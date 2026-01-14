@@ -44,7 +44,7 @@ export async function POST(req: Request) {
     }
 
     const { type, title, description, date } = parsed.data;
-    const result = insertSchedule(type, title, description, date);
+    const result = await insertSchedule(type, title, description, date);
     return NextResponse.json({ ok: true, id: result.id });
   } catch (err) {
     return NextResponse.json({ ok: false, message: 'เกิดข้อผิดพลาด' }, { status: 500 });

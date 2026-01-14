@@ -47,16 +47,17 @@ function normalizeRequestedDay(msg: string): ThaiWeekday | undefined {
   return undefined;
 }
 
-function maybeAnswerSchedule(userMessage: string, user?: { id: number; first_name: string; last_name: string; class_code: string }): string | undefined {
-  // Trigger when message likely asks about schedule
-  const low = userMessage.toLowerCase();
-  const scheduleIntent = /(ตาราง|เรียน|คาบ|schedule)/.test(low);
-  if (!scheduleIntent) return undefined;
-  if (!user || !user.class_code) {
-    return "โปรดเข้าสู่ระบบเพื่อระบุห้องเรียนของคุณ แล้วถามเช่น ‘ตารางเรียนวันนี้’ ครับ";
-  }
+function maybeAnswerSchedule(userMessage: string, user?: { id: number; first_name: string; last_name: string; class_code: string }): Promise<string | undefined> {
+  return (async () => {
+    // Trigger when message likely asks about schedule
+    const low = userMessage.toLowerCase();
+    const scheduleIntent = /(ตาราง|เรียน|คาบ|schedule)/.test(low);
+    if (!scheduleIntent) return undefined;
+    if (!user || !user.class_code) {
+      return "โปรดเข้าสู่ระบบเพื่อระบุห้องเรียนของคุณ แล้วถามเช่น 'ตารางเรียนวันนี้' ครับ";
+    }
 
-  const day = normalizeRequestedDay(userMessage) || thaiWeekdayFromDate(new Date());
+    const day = normalizeRequestedDay(userMessage) || thaiWeekdayFromDate(new Date());
   
   // ลองค้นหาในหลายรูปแบบ (รองรับทุกระดับชั้น ทุกวัน)
   const searchPatterns = [
@@ -71,7 +72,7 @@ function maybeAnswerSchedule(userMessage: string, user?: { id: number; first_nam
   try {
     // ลองค้นหาทุกรูปแบบ
     for (const pattern of searchPatterns) {
-      const results = searchAIKnowledge(pattern) as any[];
+      const results = await searchAIKnowledge(pattern) as any[];
       if (results && results.length > 0) {
         // กรองผลลัพธ์ให้ตรงกับห้องเรียนและวัน
         const exactMatch = results.find((r: any) => {
@@ -94,6 +95,7 @@ function maybeAnswerSchedule(userMessage: string, user?: { id: number; first_nam
   } catch {}
   
   return `ยังไม่พบตารางของห้อง ${user.class_code} สำหรับวัน${day} ในระบบครับ 📚\n\nกรุณาติดต่อครูประจำชั้นหรือเจ้าหน้าที่เพื่อสอบถามข้อมูลครับ`;
+  })();
 }
 
 function formatScheduleAnswer(answer: string, classCode: string, day: ThaiWeekday): string {
@@ -122,12 +124,12 @@ function formatDateTH(dateStr?: string) {
   }
 }
 
-function buildSystemContext(user?: { id: number; first_name: string; last_name: string; class_code: string }): string {
+async function buildSystemContext(user?: { id: number; first_name: string; last_name: string; class_code: string }): Promise<string> {
   // Collect real-time data from school systems
-  const announcements = (listAnnouncements() as any[]).slice(0, 5);
-  const events = (listEvents() as any[]).slice(0, 5);
-  const schedules = (listSchedules() as any[]).slice(0, 5);
-  const knowledge = (searchAIKnowledge("") as any[]).slice(0, 10);
+  const announcements = (await listAnnouncements() as any[]).slice(0, 5);
+  const events = (await listEvents() as any[]).slice(0, 5);
+  const schedules = (await listSchedules() as any[]).slice(0, 5);
+  const knowledge = (await searchAIKnowledge("") as any[]).slice(0, 10);
 
   const userInfo = user 
     ? `ผู้ใช้ปัจจุบัน: ${user.first_name} ${user.last_name} ห้อง ${user.class_code}\n\n`
@@ -194,11 +196,11 @@ async function getAIResponse(
     const apiKey = process.env.GROQ_API_KEY;
     if (!apiKey || apiKey === 'YOUR_GROQ_API_KEY_HERE') {
       console.warn("Groq API key not configured, using fallback");
-      return getFallbackResponse(userMessage, user);
+      return await getFallbackResponse(userMessage, user);
     }
 
     // Build system context with school data
-    const systemContext = buildSystemContext(user);
+    const systemContext = await buildSystemContext(user);
 
     // Prepare messages for Groq API
     const messages: any[] = [
@@ -241,29 +243,29 @@ async function getAIResponse(
     if (!response.ok) {
       const errorText = await response.text();
       console.error("Groq API error:", response.status, errorText);
-      return getFallbackResponse(userMessage, user);
+      return await getFallbackResponse(userMessage, user);
     }
 
     const data = await response.json();
     const aiResponse = data.choices?.[0]?.message?.content;
 
     if (!aiResponse || aiResponse.trim().length === 0) {
-      return getFallbackResponse(userMessage, user);
+      return await getFallbackResponse(userMessage, user);
     }
 
     return aiResponse.trim();
   } catch (error: any) {
     console.error("AI Error:", error.message || error);
-    return getFallbackResponse(userMessage, user);
+    return await getFallbackResponse(userMessage, user);
   }
 }
 
-function getFallbackResponse(userMessage: string, user?: { id: number; first_name: string; last_name: string; class_code: string }): string {
+async function getFallbackResponse(userMessage: string, user?: { id: number; first_name: string; last_name: string; class_code: string }): Promise<string> {
   const msg = userMessage.toLowerCase();
 
   // ประกาศ
   if (/(ประกาศ|ข่าว|แจ้ง)/.test(msg)) {
-    const ann = (listAnnouncements() as any[]).slice(0, 3);
+    const ann = (await listAnnouncements() as any[]).slice(0, 3);
     if (!ann.length) return "ยังไม่มีประกาศใหม่ในขณะนี้ครับ";
     const lines = ann.map((a: any) => `• ${a.title}\n  ${String(a.content || "").slice(0, 100)}...`);
     return `📢 ประกาศล่าสุด:\n\n${lines.join("\n\n")}`;
@@ -272,7 +274,7 @@ function getFallbackResponse(userMessage: string, user?: { id: number; first_nam
   // กิจกรรม
   if (/(กิจกรรม|ปฏิทิน|event)/.test(msg)) {
     const today = new Date();
-    const events = (listEvents() as any[])
+    const events = (await listEvents() as any[])
       .filter((e: any) => {
         const d = new Date(e.eventDate);
         return !isNaN(d.getTime()) && d >= new Date(today.toDateString());
@@ -285,7 +287,7 @@ function getFallbackResponse(userMessage: string, user?: { id: number; first_nam
 
   // ตารางเรียน
   if (/(ตาราง|schedule|สอบ)/.test(msg)) {
-    const schedules = (listSchedules() as any[]).slice(0, 3);
+    const schedules = (await listSchedules() as any[]).slice(0, 3);
     if (!schedules.length) return "ยังไม่พบตารางในระบบครับ";
     const lines = schedules.map((s: any) => `• ${s.title} (${s.type})`);
     return `🗓️ ตารางล่าสุด:\n\n${lines.join("\n")}`;
@@ -293,7 +295,7 @@ function getFallbackResponse(userMessage: string, user?: { id: number; first_nam
 
   // ค้นหาฐานความรู้
   try {
-    const results = searchAIKnowledge(userMessage);
+    const results = await searchAIKnowledge(userMessage);
     if (results && results.length > 0) {
       return results[0].answer;
     }
@@ -317,10 +319,10 @@ export async function POST(request: Request) {
     // ดึงบริบทผู้ใช้จากคุกกี้ (ถ้ามี)
     const cookieStore = await cookies();
     const userId = Number(cookieStore.get('kss_user')?.value || 0);
-    const user = userId ? getUserById(userId) : undefined;
+    const user = userId ? await getUserById(userId) : undefined;
 
     // Try deterministic schedule answer first
-    const scheduleAnswer = maybeAnswerSchedule(message, user);
+    const scheduleAnswer = await maybeAnswerSchedule(message, user);
     const response = scheduleAnswer ?? (await getAIResponse(message, history, user));
 
     return NextResponse.json({

@@ -18,7 +18,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: false, errors: parsed.error.flatten() }, { status: 400 });
     }
     const { title, detail, imageUrl } = parsed.data;
-    const result = insertReport(title, detail ?? '', imageUrl);
+    const result = await insertReport(null, 'general', title, detail ?? '');
     return NextResponse.json({ ok: true, id: result.id, createdAt: result.createdAt });
   } catch (err) {
     return NextResponse.json({ ok: false, message: 'เกิดข้อผิดพลาด' }, { status: 500 });

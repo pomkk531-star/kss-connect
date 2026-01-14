@@ -16,7 +16,7 @@ export async function GET(req: Request) {
   }
 
   try {
-    const reports = listAllReports();
+    const reports = await listReports();
     return NextResponse.json({ ok: true, reports });
   } catch (err) {
     console.error('[GET /api/admin/reports] error:', err);
@@ -37,10 +37,7 @@ export async function DELETE(req: Request) {
   }
 
   try {
-    const result = deleteReport(id);
-    if (result.changes === 0) {
-      return NextResponse.json({ ok: false, message: 'ไม่พบรายงานที่จะลบ' }, { status: 404 });
-    }
+    await deleteReport(id);
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error('[DELETE /api/admin/reports] error:', err);

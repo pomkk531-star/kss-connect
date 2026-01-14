@@ -46,7 +46,7 @@ export async function POST(req: Request) {
     }
 
     const { title, content, priority, imageUrl } = parsed.data;
-    const result = await insertAnnouncement(title, content, priority, imageUrl || '');
+    const result = await insertAnnouncement(title, content, priority, null);
     return NextResponse.json({ ok: true, id: result.id });
   } catch (err) {
     return NextResponse.json({ ok: false, message: 'เกิดข้อผิดพลาด' }, { status: 500 });
@@ -65,8 +65,8 @@ export async function PUT(req: Request) {
       return NextResponse.json({ ok: false, errors: parsed.error.flatten() }, { status: 400 });
     }
 
-    const { id, title, content, priority, imageUrl } = parsed.data;
-    updateAnnouncement(id, title, content, priority, imageUrl || '');
+    const { id, title, content, priority } = parsed.data;
+    updateAnnouncement(id, title, content, priority);
     return NextResponse.json({ ok: true });
   } catch (err) {
     return NextResponse.json({ ok: false, message: 'เกิดข้อผิดพลาด' }, { status: 500 });
