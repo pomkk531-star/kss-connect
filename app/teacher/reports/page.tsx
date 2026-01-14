@@ -39,12 +39,14 @@ export default function TeacherReportsPage() {
     try {
       const res = await fetch('/api/admin/reports');
       const data = await res.json();
-      if (data.ok) {
+      if (data.ok && Array.isArray(data.reports)) {
         setReports(data.reports);
       } else {
+        setReports([]);
         Swal.fire('ผิดพลาด', data.message || 'โหลดข้อมูลไม่สำเร็จ', 'error');
       }
     } catch (err) {
+      setReports([]);
       Swal.fire('ผิดพลาด', 'โหลดข้อมูลไม่สำเร็จ', 'error');
     } finally {
       setLoading(false);
