@@ -29,7 +29,7 @@ const UpdateSchema = z.object({
 const DeleteSchema = z.object({ id: z.number().int().positive() });
 
 export async function GET() {
-  const announcements = listAnnouncements();
+  const announcements = await listAnnouncements();
   return NextResponse.json({ ok: true, announcements });
 }
 

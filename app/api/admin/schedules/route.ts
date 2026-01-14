@@ -27,7 +27,7 @@ const UpdateSchema = z.object({
 const DeleteSchema = z.object({ id: z.number().int().positive() });
 
 export async function GET() {
-  const schedules = listSchedules();
+  const schedules = await listSchedules();
   return NextResponse.json({ ok: true, schedules });
 }
 

@@ -28,7 +28,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const isPasswordValid = password === user.password || await bcrypt.compare(password, user.password);
+    const isPasswordValid = password === user.password || (typeof user.password === 'string' && user.password.includes('$2') && await bcrypt.compare(password, user.password).catch(() => false));
     if (!isPasswordValid) {
       return NextResponse.json(
         { ok: false, message: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง' },
