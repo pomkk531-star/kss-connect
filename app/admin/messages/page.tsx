@@ -151,7 +151,7 @@ export default function AdminMessagesPage() {
             </button>
           </div>
         </div>
-          {filtered.length === 0 ? (
+          {!Array.isArray(filtered) || filtered.length === 0 ? (
             <p className="text-sm text-gray-500">ยังไม่มีข้อความ</p>
           ) : (
             <div className="overflow-x-auto">
@@ -166,7 +166,7 @@ export default function AdminMessagesPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map((m) => (
+                  {Array.isArray(filtered) && filtered.map((m) => (
                     <tr key={m.id} className="border-b hover:bg-green-50 transition">
                       <td className="px-6 py-4 text-gray-700 whitespace-nowrap">
                         {new Date(m.createdAt).toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short' })}
