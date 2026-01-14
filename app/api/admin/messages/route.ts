@@ -14,7 +14,7 @@ export async function GET(req: Request) {
   }
 
   try {
-    const messages = listAllMessagesDetailed();
+    const messages = await listAllMessagesDetailed();
     return NextResponse.json({ ok: true, messages });
   } catch (err) {
     console.error('[GET /api/admin/messages] error:', err);
