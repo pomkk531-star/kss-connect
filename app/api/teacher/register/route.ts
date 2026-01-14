@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import bcrypt from 'bcryptjs';
-import { findTeacher, createTeacher } from '@/lib/db';
+import { findTeacherByName, createTeacher } from '@/lib/db';
 
 export const runtime = 'nodejs';
 
@@ -29,13 +29,13 @@ export async function POST(req: Request) {
     const firstName = nameParts[0];
     const lastName = nameParts.slice(1).join(' ') || nameParts[0];
 
-    const existingTeacher = findTeacher(firstName, lastName);
+    const existingTeacher = await findTeacherByName(firstName, lastName);
     if (existingTeacher) {
       return NextResponse.json({ ok: false, message: 'ชื่อผู้ใช้นี้มีอยู่แล้ว' }, { status: 409 });
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
-    const newTeacher = createTeacher(firstName, lastName, passwordHash);
+    const newTeacher = await createTeacher(username, passwordHash, firstName, lastName, null, null);
 
     const response = NextResponse.json({ ok: true, teacherId: newTeacher.id });
     response.cookies.set('kss_teacher', String(newTeacher.id), {

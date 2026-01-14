@@ -1,7 +1,7 @@
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { countUnreadMessages, deleteMessage, getUserById, insertAnonymousMessage, listInbox, markMessageAsRead } from '@/lib/db';
+import { countUnreadMessages, deleteMessage, getUserById, insertMessage, listInbox, markMessageAsRead } from '@/lib/db';
 
 export const runtime = 'nodejs';
 
@@ -96,11 +96,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: false, message: 'ไม่สามารถส่งข้อความให้ตัวเองได้' }, { status: 400 });
     }
     
-    const recipient = getUserById(recipientId);
+    const recipient = await getUserById(recipientId);
     if (!recipient) {
       return NextResponse.json({ ok: false, message: 'ไม่พบผู้รับ' }, { status: 404 });
     }
-    const result = insertAnonymousMessage(body, recipientId, senderId);
+    const result = await insertMessage(senderId, recipientId, 'ข้อความใหม่', body);
     return NextResponse.json({ ok: true, id: result.id, createdAt: result.createdAt });
   } catch (error: any) {
     console.error('[POST /api/messages] error:', error);
@@ -121,7 +121,7 @@ export async function PUT(req: NextRequest) {
     if (!messageId) {
       return NextResponse.json({ ok: false, message: 'ต้องระบุ id' }, { status: 400 });
     }
-    markMessageAsRead(messageId, userId);
+    await markMessageAsRead(messageId);
     return NextResponse.json({ ok: true });
   } catch (error: any) {
     console.error('[PUT /api/messages] error:', error);
@@ -142,7 +142,7 @@ export async function DELETE(req: NextRequest) {
     if (!messageId) {
       return NextResponse.json({ ok: false, message: 'ต้องระบุ id' }, { status: 400 });
     }
-    deleteMessage(messageId, userId);
+    await deleteMessage(messageId);
     return NextResponse.json({ ok: true });
   } catch (error: any) {
     console.error('[DELETE /api/messages] error:', error);

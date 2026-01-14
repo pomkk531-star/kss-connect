@@ -29,13 +29,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: false, message: 'กุญแจแอดมินไม่ถูกต้อง' }, { status: 403 });
     }
 
-    const existingAdmin = findAdmin(username);
+    const existingAdmin = await findAdmin(username);
     if (existingAdmin) {
       return NextResponse.json({ ok: false, message: 'ชื่อผู้ใช้นี้มีอยู่แล้ว' }, { status: 409 });
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
-    const newAdmin = createAdmin(username, passwordHash);
+    const newAdmin = await createAdmin(username, passwordHash, null, null, null);
 
     const response = NextResponse.json({ ok: true, adminId: newAdmin.id });
     response.cookies.set('kss_admin', String(newAdmin.id), {

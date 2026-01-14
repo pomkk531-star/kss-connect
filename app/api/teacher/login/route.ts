@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import bcrypt from 'bcryptjs';
-import { findTeacher } from '@/lib/db';
+import { findTeacherByName } from '@/lib/db';
 
 export const runtime = 'nodejs';
 
@@ -24,7 +24,7 @@ export async function POST(req: Request) {
 
     const { firstName, lastName, password } = parsed.data;
 
-    const teacher = findTeacher(firstName, lastName);
+    const teacher = await findTeacherByName(firstName, lastName);
     if (!teacher) {
       return NextResponse.json(
         { ok: false, message: 'ชื่อ-นามสกุลหรือรหัสผ่านไม่ถูกต้อง' },

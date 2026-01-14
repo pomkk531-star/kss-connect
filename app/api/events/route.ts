@@ -43,7 +43,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: false, errors: parsed.error.flatten() }, { status: 400 });
     }
     const { title, description, event_date } = parsed.data;
-    const result = insertEvent(title, description ?? '', event_date);
+    const result = await insertEvent(title, description ?? '', event_date, null);
     return NextResponse.json({ ok: true, id: result.id, createdAt: result.createdAt });
   } catch (err) {
     return NextResponse.json({ ok: false, message: 'เกิดข้อผิดพลาด' }, { status: 500 });
@@ -63,7 +63,7 @@ export async function PUT(req: Request) {
     }
 
     const { id, title, description, event_date } = parsed.data;
-    updateEvent(id, title, description ?? '', event_date);
+    await updateEvent(id, title, description ?? '', event_date, null);
     return NextResponse.json({ ok: true });
   } catch (err) {
     return NextResponse.json({ ok: false, message: 'เกิดข้อผิดพลาด' }, { status: 500 });

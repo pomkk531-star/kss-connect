@@ -10,7 +10,8 @@ export async function GET(req: NextRequest) {
     if (!classCode) {
       return NextResponse.json({ ok: false, message: 'ต้องระบุ class_code' }, { status: 400 });
     }
-    const users = listUsersByClassCode(classCode);
+    const allUsers = await listAllUsers();
+    const users = allUsers.filter((u: any) => u.class_code === classCode);
     return NextResponse.json({ ok: true, users });
   } catch (error) {
     return NextResponse.json({ ok: false, message: 'เกิดข้อผิดพลาด' }, { status: 500 });
