@@ -42,12 +42,14 @@ export default function AdminMessagesPage() {
     try {
       const res = await fetch('/api/admin/messages');
       const data = await res.json();
-      if (data.ok) {
+      if (data.ok && Array.isArray(data.messages)) {
         setMessages(data.messages);
       } else {
+        setMessages([]);
         Swal.fire('ผิดพลาด', data.message || 'โหลดข้อมูลไม่สำเร็จ', 'error');
       }
     } catch (err) {
+      setMessages([]);
       Swal.fire('ผิดพลาด', 'โหลดข้อมูลไม่สำเร็จ', 'error');
     } finally {
       setLoading(false);
