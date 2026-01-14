@@ -1,19 +1,14 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import bcrypt from 'bcryptjs';
-import Database from 'better-sqlite3';
-import path from 'path';
+import { createTeacher, listTeachers, deleteTeacher } from '@/lib/db';
+import { db } from '@/lib/db';
 
 export const runtime = 'nodejs';
 
 function isAdminSession(req: Request) {
   const adminId = req.headers.get('cookie')?.match(/kss_admin=([^;]+)/)?.[1];
   return !!adminId;
-}
-
-function getDb() {
-  const dbPath = path.join(process.cwd(), 'data', 'kss.db');
-  return new Database(dbPath);
 }
 
 const CreateTeacherSchema = z.object({
@@ -38,9 +33,7 @@ export async function GET(req: Request) {
   }
 
   try {
-    const db = getDb();
-    const teachers = db.prepare('SELECT id, first_name, last_name, created_at FROM teachers ORDER BY id DESC').all();
-    db.close();
+    const teachers = await listTeachers();
     return NextResponse.json({ ok: true, teachers });
   } catch (err: any) {
     console.error('Error loading teachers:', err);
@@ -54,7 +47,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, message: 'ต้องเข้าสู่ระบบแอดมินก่อน' }, { status: 401 });
   }
 
-  let db;
   try {
     const body = await req.json();
     const parsed = CreateTeacherSchema.safeParse(body);
@@ -67,29 +59,26 @@ export async function POST(req: Request) {
     }
 
     const { firstName, lastName, password } = parsed.data;
-    db = getDb();
 
     // Check if teacher exists (by name)
-    const existing = db.prepare('SELECT id FROM teachers WHERE first_name = ? AND last_name = ?').get(firstName, lastName);
-    if (existing) {
-      db.close();
+    const result = await db.query('SELECT id FROM teachers WHERE first_name = $1 AND last_name = $2', [firstName, lastName]);
+    if (result.rows.length > 0) {
       return NextResponse.json({ ok: false, message: 'มีครูนี้อยู่แล้ว' }, { status: 409 });
     }
 
     // Hash password and insert
     const passwordHash = await bcrypt.hash(password, 10);
-    const stmt = db.prepare(`
-      INSERT INTO teachers (first_name, last_name, password_hash, created_at)
-      VALUES (?, ?, ?, datetime('now'))
-    `);
-    const result = stmt.run(firstName, lastName, passwordHash);
-    db.close();
+    const teacher = await createTeacher(
+      `${firstName.toLowerCase()}${lastName.toLowerCase()}`,
+      passwordHash,
+      firstName,
+      lastName,
+      '',
+      ''
+    );
 
-    return NextResponse.json({ ok: true, id: result.lastInsertRowid });
+    return NextResponse.json({ ok: true, id: teacher.id });
   } catch (err: any) {
-    if (db) {
-      try { db.close(); } catch (e) {}
-    }
     console.error('Error creating teacher:', err);
     return NextResponse.json({ 
       ok: false, 
@@ -104,7 +93,6 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ ok: false, message: 'ต้องเข้าสู่ระบบแอดมินก่อน' }, { status: 401 });
   }
 
-  let db;
   try {
     const body = await req.json();
     const parsed = UpdatePasswordSchema.safeParse(body);
@@ -118,15 +106,10 @@ export async function PATCH(req: Request) {
     // Hash new password
     const passwordHash = await bcrypt.hash(password, 10);
     
-    db = getDb();
-    db.prepare('UPDATE teachers SET password_hash = ? WHERE id = ?').run(passwordHash, teacherId);
-    db.close();
+    await db.query('UPDATE teachers SET password = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2', [passwordHash, teacherId]);
 
     return NextResponse.json({ ok: true });
   } catch (err: any) {
-    if (db) {
-      try { db.close(); } catch (e) {}
-    }
     console.error('Error updating teacher password:', err);
     return NextResponse.json({ 
       ok: false, 
@@ -150,9 +133,7 @@ export async function DELETE(req: Request) {
     }
 
     const { teacherId } = parsed.data;
-    const db = getDb();
-    db.prepare('DELETE FROM teachers WHERE id = ?').run(teacherId);
-    db.close();
+    await deleteTeacher(teacherId);
 
     return NextResponse.json({ ok: true });
   } catch (err) {

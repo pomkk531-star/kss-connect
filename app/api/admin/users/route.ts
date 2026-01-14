@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import bcrypt from 'bcryptjs';
-import { listAllUsers, deleteUser, updateUserRole, createUser, findUser } from '@/lib/db';
+import { listAllUsers, deleteUser, updateUserRole, createUser, db } from '@/lib/db';
 
 export const runtime = 'nodejs';
 
@@ -53,14 +53,18 @@ export async function POST(req: Request) {
     const { firstName, lastName, classCode, password } = parsed.data;
 
     // Check if student exists
-    const existing = findUser(firstName, lastName, classCode);
-    if (existing) {
+    const checkResult = await db.query(
+      'SELECT id FROM users WHERE first_name = $1 AND last_name = $2 AND class_code = $3',
+      [firstName, lastName, classCode]
+    );
+    if (checkResult.rows.length > 0) {
       return NextResponse.json({ ok: false, message: 'มีนักเรียนนี้อยู่แล้ว' }, { status: 409 });
     }
 
     // Hash password and create student
     const passwordHash = await bcrypt.hash(password, 10);
-    const created = createUser(firstName, lastName, classCode, passwordHash);
+    const username = `${firstName.toLowerCase()}${lastName.toLowerCase()}${classCode}`;
+    const created = await createUser(username, passwordHash, firstName, lastName, classCode);
 
     return NextResponse.json({ ok: true, id: created.id });
   } catch (err) {
@@ -104,10 +108,7 @@ export async function PATCH(req: Request) {
     const passwordHash = await bcrypt.hash(password, 10);
     
     // Update password in database
-    const db = require('better-sqlite3')(require('path').join(process.cwd(), 'data', 'kss.db'));
-    const stmt = db.prepare('UPDATE users SET password_hash = ? WHERE id = ?');
-    stmt.run(passwordHash, userId);
-    db.close();
+    await db.query('UPDATE users SET password = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2', [passwordHash, userId]);
 
     return NextResponse.json({ ok: true });
   } catch (err) {

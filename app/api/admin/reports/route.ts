@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { deleteReport, listAllReports } from '@/lib/db';
+import { deleteReport, listReports } from '@/lib/db';
 
 export const runtime = 'nodejs';
 

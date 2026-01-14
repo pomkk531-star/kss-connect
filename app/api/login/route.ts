@@ -1,26 +1,12 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import bcrypt from 'bcryptjs';
-import { insertLogin, findUser, findUsersByName } from '@/lib/db';
+import { insertLogin, findUser } from '@/lib/db';
 
 export const runtime = 'nodejs';
 
-// Allowed class codes: ม.1/1-1/5, ม.2/1-2/5, ม.3/1-3/5, ม.4/1-4/4, ม.5/1-5/4, ม.6/1-6/4
-const classCodes: string[] = [];
-for (let grade = 1; grade <= 6; grade++) {
-  const maxRoom = grade <= 3 ? 5 : 4; // grades 1-3 have 5 rooms; 4-6 have 4 rooms
-  for (let room = 1; room <= maxRoom; room++) {
-    classCodes.push(`ม.${grade}/${room}`);
-  }
-}
-
 const LoginSchema = z.object({
-  firstName: z.string().min(1, 'กรุณากรอกชื่อ'),
-  lastName: z.string().min(1, 'กรุณากรอกนามสกุล'),
-  classCode: z
-    .string()
-    .optional()
-    .refine((v) => !v || classCodes.includes(v), 'กรุณาเลือกห้องเรียนที่ถูกต้อง'),
+  username: z.string().min(1, 'กรุณากรอกชื่อผู้ใช้'),
   password: z.string().min(1, 'กรุณากรอกรหัสผ่าน'),
 });
 
@@ -32,52 +18,44 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: false, errors: parsed.error.flatten() }, { status: 400 });
     }
 
-    const { firstName, lastName, classCode, password } = parsed.data;
-
-    let user: Awaited<ReturnType<typeof findUsersByName>>[number] | undefined;
+    const { username, password } = parsed.data;
+    const user = await findUser(username);
     
-    const matches = await findUsersByName(firstName, lastName);
-    
-    if (classCode) {
-      // ถ้าระบุห้องเรียน ค้นหาตาม classCode
-      user = matches.find(u => u.class_code === classCode);
-    } else {
-      // ถ้าไม่ระบุห้อง ตรวจสอบว่ามีชื่อซ้ำหลายห้องหรือไม่
-      if (matches.length > 1) {
-        return NextResponse.json(
-          { ok: false, message: 'พบชื่อซ้ำหลายห้อง กรุณาเข้าสู่ระบบด้วยห้องเรียนที่ถูกต้องหรือสมัครใหม่เพื่ออัปเดตข้อมูล' },
-          { status: 409 }
-        );
-      }
-      user = matches[0];
-    }
-
     if (!user) {
-      return NextResponse.json({ ok: false, message: 'ไม่พบบัญชี กรุณาสมัครก่อนเข้าสู่ระบบ' }, { status: 404 });
+      return NextResponse.json(
+        { ok: false, message: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง' },
+        { status: 401 }
+      );
     }
-    
-    const isPasswordValid = await bcrypt.compare(password, user.password_hash);
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      return NextResponse.json({ ok: false, message: 'รหัสผ่านไม่ถูกต้อง' }, { status: 401 });
+      return NextResponse.json(
+        { ok: false, message: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง' },
+        { status: 401 }
+      );
     }
-    
-    const result = await insertLogin(firstName, lastName, user.class_code);
-    const res = NextResponse.json({ 
-      ok: true, 
-      id: user.id, 
-      createdAt: result.created_at,
+
+    await insertLogin(user.id, 'student', '', '');
+
+    const res = NextResponse.json({
+      ok: true,
       userId: user.id,
-      classCode: user.class_code
+      firstName: user.first_name,
+      lastName: user.last_name,
+      classCode: user.class_code,
     });
-    // Allow the client-side cookie check used for redirects
+
     res.cookies.set('kss_user', String(user.id), {
       httpOnly: false,
       sameSite: 'lax',
       path: '/',
-      maxAge: 60 * 60 * 24 * 180, // 180 days
+      maxAge: 60 * 60 * 24 * 180,
     });
+
     return res;
   } catch (err) {
+    console.error('Login error:', err);
     return NextResponse.json({ ok: false, message: 'เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง' }, { status: 500 });
   }
 }

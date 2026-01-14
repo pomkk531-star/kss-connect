@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { listUsersByClassCode } from '@/lib/db';
+import { listAllUsers } from '@/lib/db';
 
 export const runtime = 'nodejs';
 
