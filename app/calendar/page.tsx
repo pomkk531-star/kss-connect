@@ -40,9 +40,14 @@ export default function CalendarPage() {
   }, []);
 
   async function fetchEvents() {
-    const res = await fetch("/api/events");
-    const json = await res.json();
-    if (json?.ok) setEvents(json.events || []);
+    try {
+      const res = await fetch("/api/events");
+      const json = await res.json();
+      if (json?.ok && Array.isArray(json.events)) setEvents(json.events);
+      else setEvents([]);
+    } catch {
+      setEvents([]);
+    }
   }
 
   function getStatus(dateStr: string) {
