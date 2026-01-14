@@ -23,8 +23,10 @@ export default function Home() {
   const [classCode, setClassCode] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     // Check if already logged in, redirect to dashboard
     const cookieId = document.cookie
       .split("; ")
@@ -117,11 +119,12 @@ export default function Home() {
         }
       }
 
-      // Student login (requires firstName, lastName)
+      // Student login: generate username from firstName + lastName
+      const username = `${firstName.toLowerCase()}.${lastName.toLowerCase()}`;
       const res = await fetch("/api/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ firstName, lastName, classCode, password }),
+        body: JSON.stringify({ username, password }),
       });
       const json = await res.json();
       if (!res.ok || !json?.ok) {
@@ -132,14 +135,13 @@ export default function Home() {
       await Swal.fire({
         icon: "success",
         title: "เข้าสู่ระบบสำเร็จ",
-        text: `บันทึกเวลา: ${new Date(json.createdAt).toLocaleString()}`,
         confirmButtonColor: "#138F2D",
       });
       try {
         localStorage.setItem("kss_profile", JSON.stringify({ 
-          firstName, 
-          lastName, 
-          classCode: json.classCode || classCode,
+          firstName: json.firstName, 
+          lastName: json.lastName, 
+          classCode: json.classCode,
           userId: json.userId
         }));
         // แจ้งส่วนหัว (UserInfo) ให้รีเฟรชข้อมูลทันที โดยไม่ต้องรีเฟรชหน้า
@@ -166,6 +168,7 @@ export default function Home() {
   ];
 
   return (
+    mounted && (
     <div className="page-bg min-h-screen flex items-center justify-center px-4 py-16 relative overflow-hidden">
       {/* Decorative floating elements */}
       <div className="absolute top-24 left-8 w-32 h-32 bg-gradient-to-br from-school-200 to-school-300 rounded-full opacity-25 blur-3xl animate-pulse" />
@@ -303,5 +306,6 @@ export default function Home() {
         </form>
       </div>
     </div>
+    )
   );
 }

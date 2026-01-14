@@ -30,20 +30,24 @@ export async function POST(req: Request) {
 
     const { firstName, lastName, classCode, password } = parsed.data;
 
-    const existing = findUser(firstName, lastName, classCode);
+    // Generate username from firstName + lastName + classCode
+    const username = `${firstName.toLowerCase()}.${lastName.toLowerCase()}`;
+    
+    const existing = await findUser(username);
     if (existing) {
       return NextResponse.json({ ok: false, message: 'มีผู้ใช้งานนี้อยู่แล้ว กรุณาเข้าสู่ระบบ' }, { status: 409 });
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
-    const created = createUser(firstName, lastName, classCode, passwordHash);
+    const created = await createUser(username, passwordHash, firstName, lastName, classCode);
+    
     // Optional: initial login record
-    insertLogin(firstName, lastName, classCode);
+    await insertLogin(created.id, 'student', '', '');
 
     const res = NextResponse.json({ 
       ok: true, 
       id: created.id, 
-      createdAt: created.createdAt,
+      createdAt: created.created_at,
       userId: created.id,
       classCode: classCode
     });
@@ -56,6 +60,7 @@ export async function POST(req: Request) {
     });
     return res;
   } catch (err) {
+    console.error('Register error:', err);
     return NextResponse.json({ ok: false, message: 'เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง' }, { status: 500 });
   }
 }

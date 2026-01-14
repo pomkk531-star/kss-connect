@@ -89,7 +89,8 @@ export default function CalendarPage() {
   const monthEvents = useMemo(() => {
     const year = monthCursor.getFullYear();
     const month = monthCursor.getMonth();
-    return events
+    const eventArray = Array.isArray(events) ? events : [];
+    return eventArray
       .filter((e) => {
         const d = new Date(e.eventDate + "T00:00:00");
         return d.getFullYear() === year && d.getMonth() === month;

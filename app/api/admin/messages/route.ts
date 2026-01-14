@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { deleteMessageById, listAllMessagesDetailed } from '@/lib/db';
+import { deleteAdminMessage, listAllMessagesDetailed } from '@/lib/db';
 
 export const runtime = 'nodejs';
 
