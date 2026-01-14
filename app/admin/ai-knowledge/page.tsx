@@ -197,12 +197,14 @@ export default function AIKnowledgePage() {
     }
   }
 
-  const filteredKnowledge = knowledge.filter(
-    (item) =>
-      item.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.answer.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.keywords.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredKnowledge = Array.isArray(knowledge) 
+    ? knowledge.filter(
+        (item) =>
+          item.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          item.answer.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          item.keywords.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    : [];
 
   if (loading) {
     return (

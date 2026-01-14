@@ -21,12 +21,15 @@ export default function MessagesPage() {
   const [showUnreadOnly, setShowUnreadOnly] = useState(false);
 
   const unreadCount = useMemo(
-    () => inbox.filter((m) => m.isRead === 0 && !revealedMessages.has(m.id)).length,
+    () => Array.isArray(inbox) ? inbox.filter((m) => m.isRead === 0 && !revealedMessages.has(m.id)).length : 0,
     [inbox, revealedMessages]
   );
 
   const displayedInbox = useMemo(
-    () => (showUnreadOnly ? inbox.filter((m) => m.isRead === 0 && !revealedMessages.has(m.id)) : inbox),
+    () => {
+      if (!Array.isArray(inbox)) return [];
+      return showUnreadOnly ? inbox.filter((m) => m.isRead === 0 && !revealedMessages.has(m.id)) : inbox;
+    },
     [inbox, showUnreadOnly, revealedMessages]
   );
 
@@ -152,7 +155,7 @@ export default function MessagesPage() {
   }
 
   const hasSelection = useMemo(() => selectedClass && selectedUserId, [selectedClass, selectedUserId]);
-  const totalCount = inbox.length;
+  const totalCount = Array.isArray(inbox) ? inbox.length : 0;
 
   if (loading) {
     return (
